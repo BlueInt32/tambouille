@@ -1,0 +1,12 @@
+services:
+  tambouille:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
