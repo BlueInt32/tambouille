@@ -63,7 +63,7 @@ async function submit() {
         type="text"
         placeholder="Ex : Poulet rôti, Pâtes…"
         autocomplete="off"
-        class="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 bg-surface font-sans text-text text-sm
+        class="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-surface font-sans text-text text-sm
                placeholder:text-text-muted/40 focus:outline-none focus:ring-2 focus:ring-primary
                focus:border-transparent transition-all"
         :class="{ 'border-red-300': error }"
@@ -80,9 +80,9 @@ async function submit() {
           type="button"
           @click="decrement"
           :disabled="persons <= 1"
-          class="w-9 h-9 rounded-xl bg-amber-50 text-text font-bold text-lg
+          class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-text font-bold text-lg
                  flex items-center justify-center
-                 hover:bg-amber-100 active:scale-95 transition-all
+                 hover:bg-amber-100 dark:hover:bg-amber-900/30 active:scale-95 transition-all
                  disabled:opacity-30 disabled:cursor-not-allowed"
         >−</button>
 
@@ -92,9 +92,9 @@ async function submit() {
           type="button"
           @click="increment"
           :disabled="persons >= 20"
-          class="w-9 h-9 rounded-xl bg-amber-50 text-text font-bold text-lg
+          class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-text font-bold text-lg
                  flex items-center justify-center
-                 hover:bg-amber-100 active:scale-95 transition-all
+                 hover:bg-amber-100 dark:hover:bg-amber-900/30 active:scale-95 transition-all
                  disabled:opacity-30 disabled:cursor-not-allowed"
         >+</button>
 
@@ -112,8 +112,8 @@ async function submit() {
       <button
         type="button"
         @click="emit('cancel')"
-        class="flex-1 py-2.5 rounded-xl border border-amber-200 text-text-muted font-sans font-medium text-sm
-               hover:bg-amber-50 active:scale-95 transition-all"
+        class="flex-1 py-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40 text-text-muted font-sans font-medium text-sm
+               hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-95 transition-all"
       >
         Annuler
       </button>

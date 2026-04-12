@@ -27,13 +27,13 @@ const isToday = (() => {
   <div
     class="bg-surface-card rounded-xl border-l-4 shadow-sm cursor-pointer
            active:scale-[0.99] transition-all duration-150"
-    :class="isToday ? 'border-l-primary' : 'border-l-amber-200'"
+    :class="isToday ? 'border-l-primary' : 'border-l-amber-200 dark:border-l-amber-800/50'"
   >
     <div class="flex items-center gap-2.5 px-3 py-2.5">
       <!-- Date -->
       <div
         class="flex-shrink-0 w-10 h-10 rounded-xl flex flex-col items-center justify-center"
-        :class="isToday ? 'bg-primary text-white' : 'bg-amber-50 text-text'"
+        :class="isToday ? 'bg-primary text-white' : 'bg-amber-50 dark:bg-amber-900/20 text-text'"
       >
         <span class="font-display font-bold text-base leading-none">{{ dayNum }}</span>
         <span class="font-sans text-[10px] uppercase tracking-wide mt-0.5 opacity-70">{{ monthName }}</span>
@@ -45,7 +45,7 @@ const isToday = (() => {
           <span class="font-display font-semibold text-text text-sm">{{ dayName }}</span>
           <span
             v-if="meals.length > 0"
-            class="text-xs font-sans text-text-muted bg-amber-50 px-1.5 py-0.5 rounded-full"
+            class="text-xs font-sans text-text-muted bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full"
           >
             {{ meals.length }} repas
           </span>

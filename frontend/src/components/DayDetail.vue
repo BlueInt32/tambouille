@@ -57,7 +57,7 @@ async function deleteMeal(id: number) {
 <template>
   <div class="pb-8">
     <!-- En-tête du jour -->
-    <div class="px-4 py-5 border-b border-amber-100">
+    <div class="px-4 py-5 border-b border-amber-100 dark:border-amber-900/30">
       <h2 class="font-display text-text text-2xl font-bold capitalize">{{ dayLabel }}</h2>
       <p class="font-sans text-text-muted text-sm mt-0.5">
         {{ meals.length === 0 ? 'Aucun repas prévu' : `${meals.length} repas planifié${meals.length > 1 ? 's' : ''}` }}
@@ -69,7 +69,7 @@ async function deleteMeal(id: number) {
       <div v-for="slot in [0, 1]" :key="slot">
         <div
           class="rounded-2xl overflow-hidden"
-          :class="meals.find(m => m.slot === slot) ? 'bg-surface-card shadow-sm' : 'bg-amber-50/50 border border-dashed border-amber-200'"
+          :class="meals.find(m => m.slot === slot) ? 'bg-surface-card shadow-sm' : 'bg-amber-50/50 dark:bg-amber-900/10 border border-dashed border-amber-200 dark:border-amber-800/30'"
         >
           <!-- Slot avec repas -->
           <template v-if="meals.find(m => m.slot === slot) as Meal">
@@ -91,7 +91,7 @@ async function deleteMeal(id: number) {
                   <button
                     @click="startEdit(meals.find(m => m.slot === slot)!)"
                     class="w-8 h-8 rounded-xl flex items-center justify-center text-text-muted
-                           hover:bg-amber-100 hover:text-primary active:scale-95 transition-all"
+                           hover:bg-amber-100 dark:hover:bg-amber-900/30 hover:text-primary active:scale-95 transition-all"
                   >
                     <i class="pi pi-pencil text-sm"></i>
                   </button>
@@ -115,7 +115,7 @@ async function deleteMeal(id: number) {
                   :date="date"
                   :meal="editingMeal"
                   :slot="slot"
-                  class="mt-4 pt-4 border-t border-amber-100"
+                  class="mt-4 pt-4 border-t border-amber-100 dark:border-amber-900/30"
                   @saved="onSaved"
                   @cancel="closeForm"
                 />
@@ -128,7 +128,7 @@ async function deleteMeal(id: number) {
             <button
               @click="addingSlot = addingSlot === slot ? null : slot"
               class="w-full p-4 flex items-center gap-3 text-left"
-              :class="addingSlot === slot ? 'cursor-default' : 'hover:bg-amber-100/50 active:bg-amber-100 transition-colors cursor-pointer'"
+              :class="addingSlot === slot ? 'cursor-default' : 'hover:bg-amber-100/50 dark:hover:bg-amber-900/20 active:bg-amber-100 dark:active:bg-amber-900/30 transition-colors cursor-pointer'"
             >
               <span class="text-xs font-sans font-semibold text-text-muted uppercase tracking-wider w-8">{{ SLOT_LABELS[slot] }}</span>
               <span v-if="addingSlot !== slot" class="font-sans text-text-muted/60 text-sm italic">Ajouter un repas…</span>

@@ -53,7 +53,7 @@ async function login() {
                 type="password"
                 placeholder="Mot de passe"
                 autocomplete="current-password"
-                class="w-full px-4 py-3 rounded-xl border border-amber-200 bg-surface font-sans text-text
+                class="w-full px-4 py-3 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-surface font-sans text-text
                        placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary
                        focus:border-transparent transition-all text-base"
                 :class="{ 'border-red-300 focus:ring-red-400': error }"

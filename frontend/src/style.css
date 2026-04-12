@@ -4,14 +4,33 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-primary:       234 124 30;
+  --color-primary-light: 245 168 78;
+  --color-primary-dark:  196 94 10;
+  --color-accent:        74 124 89;
+  --color-accent-light:  106 172 122;
+  --color-surface:       253 246 238;
+  --color-surface-card:  255 248 240;
+  --color-text:          45 31 14;
+  --color-text-muted:    138 106 74;
+}
+
+.dark {
+  --color-surface:      28 18 8;
+  --color-surface-card: 38 26 14;
+  --color-text:         240 228 204;
+  --color-text-muted:   160 120 80;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background-color: #fdf6ee;
-  color: #2d1f0e;
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-text));
   font-family: system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }

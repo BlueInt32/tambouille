@@ -2,11 +2,13 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlanningStore } from '@/stores/planning'
+import { useTheme } from '@/composables/useTheme'
 import WeekGrid from '@/components/WeekGrid.vue'
 import DayDetail from '@/components/DayDetail.vue'
 
 const router = useRouter()
 const store = usePlanningStore()
+const { isDark, toggle: toggleTheme } = useTheme()
 const selectedDate = ref<string | null>(null)
 
 onMounted(() => {
@@ -30,7 +32,7 @@ function logout() {
 <template>
   <div class="h-dvh flex flex-col bg-surface font-sans overflow-hidden">
     <!-- Barre de titre -->
-    <header class="bg-surface-card border-b border-amber-100 px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+    <header class="bg-surface-card border-b border-amber-100 dark:border-amber-900/30 px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
       <Transition name="fade-fast" mode="out-in">
         <button
           v-if="selectedDate"
@@ -45,13 +47,22 @@ function logout() {
         <span v-else key="title" class="font-display text-text text-lg font-semibold">Tambouille</span>
       </Transition>
 
-      <button
-        @click="logout"
-        class="text-text-muted/60 hover:text-text-muted transition-colors p-1.5 rounded-lg hover:bg-amber-50"
-        title="Déconnexion"
-      >
-        <i class="pi pi-sign-out text-base"></i>
-      </button>
+      <div class="flex items-center gap-0.5">
+        <button
+          @click="toggleTheme"
+          class="text-text-muted/60 hover:text-text-muted transition-colors p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
+          :title="isDark ? 'Mode clair' : 'Mode nuit'"
+        >
+          <i :class="isDark ? 'pi pi-sun' : 'pi pi-moon'" class="text-base"></i>
+        </button>
+        <button
+          @click="logout"
+          class="text-text-muted/60 hover:text-text-muted transition-colors p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
+          title="Déconnexion"
+        >
+          <i class="pi pi-sign-out text-base"></i>
+        </button>
+      </div>
     </header>
 
     <!-- Contenu principal avec transition slide -->

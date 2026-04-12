@@ -4,6 +4,7 @@ export default {
     './index.html',
     './src/**/*.{vue,js,ts,jsx,tsx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -11,10 +12,23 @@ export default {
         sans: ['DM Sans', 'system-ui', 'sans-serif'],
       },
       colors: {
-        primary: { DEFAULT: '#ea7c1e', light: '#f5a84e', dark: '#c45e0a' },
-        accent:  { DEFAULT: '#4a7c59', light: '#6aac7a' },
-        surface: { DEFAULT: '#fdf6ee', card: '#fff8f0' },
-        text:    { DEFAULT: '#2d1f0e', muted: '#8a6a4a' },
+        primary: {
+          DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+          light:   'rgb(var(--color-primary-light) / <alpha-value>)',
+          dark:    'rgb(var(--color-primary-dark) / <alpha-value>)',
+        },
+        accent: {
+          DEFAULT: 'rgb(var(--color-accent) / <alpha-value>)',
+          light:   'rgb(var(--color-accent-light) / <alpha-value>)',
+        },
+        surface: {
+          DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
+          card:    'rgb(var(--color-surface-card) / <alpha-value>)',
+        },
+        text: {
+          DEFAULT: 'rgb(var(--color-text) / <alpha-value>)',
+          muted:   'rgb(var(--color-text-muted) / <alpha-value>)',
+        },
       },
     },
   },
