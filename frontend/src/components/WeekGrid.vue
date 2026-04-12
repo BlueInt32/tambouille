@@ -48,7 +48,7 @@ const dragging = ref(false)
 
 const trackStyle = computed(() => ({
   transform: `translateX(calc(-100vw + ${dragDelta.value}px))`,
-  transition: animated.value ? 'transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+  transition: animated.value ? 'transform 180ms cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
   willChange: 'transform',
 }))
 
@@ -58,7 +58,7 @@ async function completeNav(direction: 1 | -1) {
   animated.value = true
   dragDelta.value = direction === 1 ? -window.innerWidth : window.innerWidth
 
-  await sleep(300)
+  await sleep(180)
 
   if (direction === 1) {
     const oldCenter = new Date(centerMonday.value)
@@ -119,7 +119,7 @@ async function onTouchEnd(e: TouchEvent) {
   } else {
     animated.value = true
     dragDelta.value = 0
-    await sleep(300)
+    await sleep(180)
   }
 }
 
