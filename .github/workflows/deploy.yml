@@ -1,0 +1,43 @@
+name: Build, Publish Images to DockerHub & Deploy
+on: [workflow_dispatch, push]
+jobs:
+  build_publish_deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    env:
+      PORTAINER_HOST: 'portainer.persistor.ovh'
+      PORTAINER_ENDPOINT_ID: 3
+      PORTAINER_STACK_ID: 20
+    steps:
+      - name: Git checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Build images
+        run: |
+          docker image build ./backend --tag blueint32/tambouille-api:latest
+          docker image build ./frontend \
+            --build-arg VITE_API_URL=https://tambouille-api.persistor.ovh \
+            --tag blueint32/tambouille-ui:latest
+      - name: Push images to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login --username blueint32 --password-stdin
+          docker image push blueint32/tambouille-api:latest
+          docker image push blueint32/tambouille-ui:latest
+      - name: Deploy to Portainer
+        shell: bash
+        run: |
+          curl \
+            --url 'https://${{ env.PORTAINER_HOST }}/api/stacks/${{ env.PORTAINER_STACK_ID }}?endpointId=${{ env.PORTAINER_ENDPOINT_ID }}' \
+            --request PUT \
+            --header "x-api-key: ${{ secrets.PORTAINER_API_KEY }}" \
+            --header 'Content-Type: application/json' \
+            --data "{
+              \"env\": [
+                {\"name\": \"Auth__Password\", \"value\": \"${{ secrets.TAMBOUILLE_AUTH_PASSWORD }}\"},
+                {\"name\": \"Auth__JwtSecret\", \"value\": \"${{ secrets.TAMBOUILLE_JWT_SECRET }}\"}
+              ],
+              \"prune\": true,
+              \"pullImage\": true,
+              \"stackFileContent\": \"services:\n  tambouille-api:\n    image: blueint32/tambouille-api:latest\n    restart: unless-stopped\n    volumes:\n      - /home/ubuntu/tambouille/data:/data\n    environment:\n      - Auth__Password=\${Auth__Password}\n      - Auth__JwtSecret=\${Auth__JwtSecret}\n      - ConnectionStrings__Default=Data Source=/data/tambouille.db\n    ports:\n      - 8888:8888\n  tambouille-ui:\n    image: blueint32/tambouille-ui:latest\n    restart: unless-stopped\n    ports:\n      - 3333:80\n\"
+            }"

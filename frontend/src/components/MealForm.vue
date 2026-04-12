@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { usePlanningStore } from '@/stores/planning'
 import type { Meal } from '@/types'
 
@@ -18,6 +18,9 @@ const store = usePlanningStore()
 
 const name = ref(props.meal?.name ?? '')
 const persons = ref(props.meal?.persons ?? 2)
+const nameInput = ref<HTMLInputElement | null>(null)
+
+onMounted(() => nameInput.value?.focus())
 const loading = ref(false)
 const error = ref('')
 
@@ -55,6 +58,7 @@ async function submit() {
         Plat
       </label>
       <input
+        ref="nameInput"
         v-model="name"
         type="text"
         placeholder="Ex : Poulet rôti, Pâtes…"
@@ -120,10 +124,7 @@ async function submit() {
                hover:bg-primary-dark active:scale-95 transition-all
                disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
       >
-        <svg v-if="loading" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-        </svg>
+        <i v-if="loading" class="pi pi-spinner pi-spin text-sm"></i>
         {{ meal ? 'Enregistrer' : 'Ajouter' }}
       </button>
     </div>

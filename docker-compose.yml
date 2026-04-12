@@ -1,5 +1,5 @@
 services:
-  tambouille:
+  tambouille-api:
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -9,4 +9,13 @@ services:
     env_file:
       - .env
     ports:
-      - "8080:8080"
+      - "8888:8888"
+  tambouille-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8888
+    restart: unless-stopped
+    ports:
+      - "3333:80"

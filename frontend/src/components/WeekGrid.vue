@@ -1,51 +1,94 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { usePlanningStore } from '@/stores/planning'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { usePlanningStore, addDays } from '@/stores/planning'
 import DayCard from '@/components/DayCard.vue'
 
-const emit = defineEmits<{
-  'select-day': [date: string]
-}>()
-
+const emit = defineEmits<{ 'select-day': [date: string] }>()
 const store = usePlanningStore()
 
+// --- Helpers ---
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
                    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
 
-const weekLabel = computed(() => {
-  const days = store.weekDays
-  const first = days[0]
-  const last = days[6]
-  const d1 = first.getDate()
-  const d2 = last.getDate()
-  const m1 = MONTHS_FR[first.getMonth()]
-  const m2 = MONTHS_FR[last.getMonth()]
+function weekLabel(monday: Date): string {
+  const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
+  const first = days[0], last = days[6]
+  const d1 = first.getDate(), d2 = last.getDate()
+  const m1 = MONTHS_FR[first.getMonth()], m2 = MONTHS_FR[last.getMonth()]
   const y = last.getFullYear()
-  if (first.getMonth() === last.getMonth()) {
-    return `${d1} – ${d2} ${m1} ${y}`
-  }
-  return `${d1} ${m1} – ${d2} ${m2} ${y}`
-})
-
-function dateString(date: Date): string {
-  return date.toISOString().slice(0, 10)
+  return first.getMonth() === last.getMonth()
+    ? `${d1} – ${d2} ${m1} ${y}`
+    : `${d1} ${m1} – ${d2} ${m2} ${y}`
 }
 
-// --- Swipe ---
-const wrapper = ref<HTMLElement | null>(null)
-const offsetX = ref(0)
+function daysOf(monday: Date): Date[] {
+  return Array.from({ length: 7 }, (_, i) => addDays(monday, i))
+}
+
+function dateStr(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+// --- Panneaux (état local, indépendant du store) ---
+const leftMonday = ref<Date>(addDays(store.currentWeekMonday, -7))
+const centerMonday = ref<Date>(new Date(store.currentWeekMonday))
+const rightMonday = ref<Date>(addDays(store.currentWeekMonday, 7))
+
+// --- Carrousel ---
+const track = ref<HTMLElement | null>(null)
+const dragDelta = ref(0)
 const animated = ref(false)
 const isAnimating = ref(false)
 const touchStartX = ref(0)
 const touchStartY = ref(0)
 const dragging = ref(false)
 
-const contentStyle = computed(() => ({
-  transform: `translateX(${offsetX.value}px)`,
+const trackStyle = computed(() => ({
+  transform: `translateX(calc(-100vw + ${dragDelta.value}px))`,
   transition: animated.value ? 'transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
   willChange: 'transform',
 }))
 
+async function completeNav(direction: 1 | -1) {
+  // direction: 1 = semaine suivante (glisse à gauche), -1 = semaine précédente (glisse à droite)
+  isAnimating.value = true
+  animated.value = true
+  dragDelta.value = direction === 1 ? -window.innerWidth : window.innerWidth
+
+  await sleep(300)
+
+  if (direction === 1) {
+    const oldCenter = new Date(centerMonday.value)
+    const oldRight = new Date(rightMonday.value)
+    // 1. Mettre le centre à jour → Vue re-rend le panneau central avec le contenu du droit
+    centerMonday.value = oldRight
+    await nextTick()
+    // 2. Maintenant le centre a le bon contenu → snap sans animation
+    animated.value = false
+    dragDelta.value = 0
+    // 3. Mettre à jour les panneaux hors-écran
+    leftMonday.value = oldCenter
+    rightMonday.value = addDays(oldRight, 7)
+    store.goToWeek(oldRight)
+  } else {
+    const oldCenter = new Date(centerMonday.value)
+    const oldLeft = new Date(leftMonday.value)
+    centerMonday.value = oldLeft
+    await nextTick()
+    animated.value = false
+    dragDelta.value = 0
+    rightMonday.value = oldCenter
+    leftMonday.value = addDays(oldLeft, -7)
+    store.goToWeek(oldLeft)
+  }
+
+  isAnimating.value = false
+}
+
+// --- Touch ---
 function onTouchStart(e: TouchEvent) {
   if (isAnimating.value) return
   touchStartX.value = e.touches[0].clientX
@@ -58,116 +101,138 @@ function onTouchMove(e: TouchEvent) {
   if (isAnimating.value) return
   const dx = e.touches[0].clientX - touchStartX.value
   const dy = e.touches[0].clientY - touchStartY.value
-
   if (!dragging.value) {
-    if (Math.abs(dy) > Math.abs(dx)) return        // scroll vertical
-    if (Math.abs(dx) < 8) return                   // pas encore décidé
+    if (Math.abs(dy) > Math.abs(dx)) return
+    if (Math.abs(dx) < 8) return
     dragging.value = true
   }
-
   e.preventDefault()
-  offsetX.value = dx
+  dragDelta.value = dx
 }
 
 async function onTouchEnd(e: TouchEvent) {
   if (!dragging.value) return
   dragging.value = false
-
   const dx = e.changedTouches[0].clientX - touchStartX.value
-  const vw = window.innerWidth
-  const THRESHOLD = 60
-
-  if (Math.abs(dx) >= THRESHOLD && !store.loading) {
-    isAnimating.value = true
-    animated.value = true
-    offsetX.value = dx > 0 ? vw : -vw          // glisse vers l'extérieur
-
-    await sleep(300)
-
-    animated.value = false
-    if (dx > 0) store.previousWeek()
-    else store.nextWeek()
-    offsetX.value = dx > 0 ? -vw : vw          // arrive de l'autre côté
-
-    await sleep(30)                              // laisser Vue updater le DOM
-
-    animated.value = true
-    offsetX.value = 0                           // glisse vers le centre
-
-    await sleep(300)
-    isAnimating.value = false
+  if (Math.abs(dx) >= 60) {
+    await completeNav(dx < 0 ? 1 : -1)
   } else {
     animated.value = true
-    offsetX.value = 0
+    dragDelta.value = 0
     await sleep(300)
   }
 }
 
 function sleep(ms: number) {
-  return new Promise(r => setTimeout(r, ms))
+  return new Promise((r) => setTimeout(r, ms))
 }
 
-onMounted(() => {
-  wrapper.value?.addEventListener('touchmove', onTouchMove, { passive: false })
+// --- Indicateur de chargement avec debounce ---
+const showLoading = ref(false)
+let loadingTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(() => store.loading, (loading) => {
+  if (loading) {
+    loadingTimer = setTimeout(() => { showLoading.value = true }, 300)
+  } else {
+    if (loadingTimer) { clearTimeout(loadingTimer); loadingTimer = null }
+    showLoading.value = false
+  }
 })
 
+onMounted(() => {
+  track.value?.addEventListener('touchmove', onTouchMove, { passive: false })
+})
 onUnmounted(() => {
-  wrapper.value?.removeEventListener('touchmove', onTouchMove)
+  track.value?.removeEventListener('touchmove', onTouchMove)
 })
 </script>
 
 <template>
-  <div
-    ref="wrapper"
-    class="px-4 pb-8"
-    :style="contentStyle"
-    @touchstart="onTouchStart"
-    @touchend="onTouchEnd"
-  >
-    <!-- Navigation semaine -->
-    <div class="flex items-center justify-between py-5">
-      <button
-        @click="store.previousWeek"
-        class="w-10 h-10 flex items-center justify-center rounded-full text-primary
-               hover:bg-primary/10 active:bg-primary/20 transition-colors"
-        :disabled="store.loading"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-        </svg>
-      </button>
+  <div class="overflow-hidden h-full">
+    <div ref="track" class="flex h-full" :style="trackStyle" @touchstart="onTouchStart" @touchend="onTouchEnd">
 
-      <div class="text-center">
-        <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel }}</p>
-        <p v-if="store.loading" class="text-text-muted text-xs mt-0.5 font-sans">Chargement…</p>
+      <!-- Panneau gauche : semaine précédente -->
+      <div class="w-screen shrink-0 px-4 flex flex-col h-full">
+        <div class="flex items-center justify-between py-3 shrink-0">
+          <button @click="completeNav(-1)" :disabled="isAnimating"
+            class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
+            <i class="pi pi-chevron-left text-base"></i>
+          </button>
+          <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel(leftMonday) }}</p>
+          <button @click="completeNav(1)" :disabled="isAnimating"
+            class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
+            <i class="pi pi-chevron-right text-base"></i>
+          </button>
+        </div>
+        <div class="flex flex-col gap-1.5 flex-1 min-h-0 pb-3">
+          <DayCard
+            v-for="day in daysOf(leftMonday)"
+            :key="dateStr(day)"
+            :date="day"
+            :meals="store.mealsForDayOf(leftMonday, dateStr(day))"
+            @click="emit('select-day', dateStr(day))"
+            class="flex-1"
+          />
+        </div>
       </div>
 
-      <button
-        @click="store.nextWeek"
-        class="w-10 h-10 flex items-center justify-center rounded-full text-primary
-               hover:bg-primary/10 active:bg-primary/20 transition-colors"
-        :disabled="store.loading"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-        </svg>
-      </button>
-    </div>
+      <!-- Panneau central : semaine courante -->
+      <div class="w-screen shrink-0 px-4 flex flex-col h-full">
+        <div class="flex items-center justify-between py-3 shrink-0">
+          <button @click="completeNav(-1)" :disabled="isAnimating"
+            class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
+            <i class="pi pi-chevron-left text-base"></i>
+          </button>
+          <div class="text-center">
+            <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel(centerMonday) }}</p>
+            <p v-if="showLoading" class="text-text-muted text-xs mt-0.5 font-sans">Chargement…</p>
+          </div>
+          <button @click="completeNav(1)" :disabled="isAnimating"
+            class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
+            <i class="pi pi-chevron-right text-base"></i>
+          </button>
+        </div>
+        <div v-if="store.error" class="mb-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-sans shrink-0">
+          {{ store.error }}
+        </div>
+        <div class="flex flex-col gap-1.5 flex-1 min-h-0 pb-3">
+          <DayCard
+            v-for="day in daysOf(centerMonday)"
+            :key="dateStr(day)"
+            :date="day"
+            :meals="store.mealsForDayOf(centerMonday, dateStr(day))"
+            @click="emit('select-day', dateStr(day))"
+            class="flex-1"
+          />
+        </div>
+      </div>
 
-    <!-- Erreur -->
-    <div v-if="store.error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-sans">
-      {{ store.error }}
-    </div>
+      <!-- Panneau droit : semaine suivante -->
+      <div class="w-screen shrink-0 px-4 flex flex-col h-full">
+        <div class="flex items-center justify-between py-3 shrink-0">
+          <button @click="completeNav(-1)" :disabled="isAnimating"
+            class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
+            <i class="pi pi-chevron-left text-base"></i>
+          </button>
+          <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel(rightMonday) }}</p>
+          <button @click="completeNav(1)" :disabled="isAnimating"
+            class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
+            <i class="pi pi-chevron-right text-base"></i>
+          </button>
+        </div>
+        <div class="flex flex-col gap-1.5 flex-1 min-h-0 pb-3">
+          <DayCard
+            v-for="day in daysOf(rightMonday)"
+            :key="dateStr(day)"
+            :date="day"
+            :meals="store.mealsForDayOf(rightMonday, dateStr(day))"
+            @click="emit('select-day', dateStr(day))"
+            class="flex-1"
+          />
+        </div>
+      </div>
 
-    <!-- Grille des jours -->
-    <div class="flex flex-col gap-3">
-      <DayCard
-        v-for="day in store.weekDays"
-        :key="dateString(day)"
-        :date="day"
-        :meals="store.mealsForDay(dateString(day))"
-        @click="emit('select-day', dateString(day))"
-      />
     </div>
   </div>
 </template>
