@@ -39,5 +39,5 @@ jobs:
               ],
               \"prune\": true,
               \"pullImage\": true,
-              \"stackFileContent\": \"services:\n  tambouille-api:\n    image: blueint32/tambouille-api:latest\n    restart: unless-stopped\n    volumes:\n      - /home/ubuntu/tambouille/data:/data\n    environment:\n      - Auth__Password=\${Auth__Password}\n      - Auth__JwtSecret=\${Auth__JwtSecret}\n      - ConnectionStrings__Default=Data Source=/data/tambouille.db\n    ports:\n      - 8888:8888\n  tambouille-ui:\n    image: blueint32/tambouille-ui:latest\n    restart: unless-stopped\n    ports:\n      - 3333:80\n\"
+              \"stackFileContent\": \"services:\n  tambouille-api:\n    image: blueint32/tambouille-api:latest\n    restart: unless-stopped\n    volumes:\n      - /home/ubuntu/tambouille/data:/data\n    environment:\n      - Auth__Password=\${Auth__Password}\n      - Auth__JwtSecret=\${Auth__JwtSecret}\n      - ConnectionStrings__Default=Data Source=/data/tambouille.db\n    ports:\n      - 8888:8888\n    networks:\n      - proxy-network\n  tambouille-ui:\n    image: blueint32/tambouille-ui:latest\n    restart: unless-stopped\n    ports:\n      - 3333:80\n    networks:\n      - proxy-network\nnetworks:\n  proxy-network:\n    external: true\n\"
             }"
