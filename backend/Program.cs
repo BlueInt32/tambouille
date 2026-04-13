@@ -47,6 +47,7 @@ try
     // Validators
     builder.Services.AddScoped<IValidator<CreateMealRequest>, CreateMealRequestValidator>();
     builder.Services.AddScoped<IValidator<UpdateMealRequest>, UpdateMealRequestValidator>();
+    builder.Services.AddScoped<IValidator<MoveMealRequest>, MoveMealRequestValidator>();
 
     // CORS
     builder.Services.AddCors(options =>

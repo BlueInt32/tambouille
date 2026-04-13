@@ -104,6 +104,17 @@ export const usePlanningStore = defineStore('planning', () => {
     }
   }
 
+  async function moveMeal(id: number, targetDate: string, targetSlot: number) {
+    const { data: affected } = await mealsApi.move(id, { date: targetDate, slot: targetSlot })
+    const key = weekStart.value
+    const affectedIds = new Set(affected.map((m) => m.id))
+    const current = mealsCache.value[key] ?? []
+    mealsCache.value[key] = [
+      ...current.filter((m) => !affectedIds.has(m.id)),
+      ...affected,
+    ]
+  }
+
   async function deleteMeal(id: number) {
     await mealsApi.delete(id)
     for (const key of Object.keys(mealsCache.value)) {
@@ -130,6 +141,7 @@ export const usePlanningStore = defineStore('planning', () => {
     nextWeek,
     addMeal,
     updateMeal,
+    moveMeal,
     deleteMeal,
   }
 })

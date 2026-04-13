@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { CreateMealRequest, Meal, UpdateMealRequest } from '@/types'
+import type { CreateMealRequest, Meal, MoveMealRequest, UpdateMealRequest } from '@/types'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8888',
@@ -27,6 +27,9 @@ export const mealsApi = {
 
   update: (id: number, data: UpdateMealRequest) =>
     api.put<Meal>(`/api/meals/${id}`, data),
+
+  move: (id: number, data: MoveMealRequest) =>
+    api.patch<Meal[]>(`/api/meals/${id}/move`, data),
 
   delete: (id: number) =>
     api.delete(`/api/meals/${id}`),

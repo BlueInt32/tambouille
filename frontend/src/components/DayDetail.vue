@@ -4,6 +4,8 @@ import { usePlanningStore } from '@/stores/planning'
 import MealForm from '@/components/MealForm.vue'
 import type { Meal } from '@/types'
 
+const DAYS_SHORT = ['Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa']
+
 const props = defineProps<{
   date: string
 }>()
@@ -71,8 +73,60 @@ const addingSlot = ref<number | null>(null)
 
 const deletingId = ref<number | null>(null)
 
+// État du déplacement
+const movingMealId = ref<number | null>(null)
+const isMoving = ref(false)
+
+const movingMeal = computed(() =>
+  movingMealId.value !== null
+    ? store.meals.find((m) => m.id === movingMealId.value) ?? null
+    : null
+)
+
+function dateStr(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+function mealAtSlot(targetDate: string, targetSlot: number): Meal | undefined {
+  return store.meals.find((m) => m.date === targetDate && m.slot === targetSlot)
+}
+
+function isSourceSlot(targetDate: string, targetSlot: number): boolean {
+  return movingMeal.value?.date === targetDate && movingMeal.value?.slot === targetSlot
+}
+
+function slotClass(targetDate: string, targetSlot: number): string {
+  if (isSourceSlot(targetDate, targetSlot)) return 'bg-primary/20 text-primary'
+  if (mealAtSlot(targetDate, targetSlot)) return 'bg-amber-200 dark:bg-amber-700/50 text-text active:scale-95'
+  return 'bg-amber-50 dark:bg-amber-900/20 text-text-muted/40 active:scale-95 active:bg-amber-100 dark:active:bg-amber-800/40'
+}
+
+function toggleMove(mealId: number) {
+  if (movingMealId.value === mealId) {
+    movingMealId.value = null
+  } else {
+    editingMeal.value = null
+    addingSlot.value = null
+    movingMealId.value = mealId
+  }
+}
+
+async function onMoveClick(targetDate: string, targetSlot: number) {
+  if (!movingMeal.value || isMoving.value || isSourceSlot(targetDate, targetSlot)) return
+  isMoving.value = true
+  try {
+    await store.moveMeal(movingMeal.value.id, targetDate, targetSlot)
+    movingMealId.value = null
+  } catch {
+    // laisser le picker ouvert, l'utilisateur peut réessayer
+  } finally {
+    isMoving.value = false
+  }
+}
+
 function startEdit(meal: Meal) {
   addingSlot.value = null
+  movingMealId.value = null
   editingMeal.value = meal
 }
 
@@ -148,6 +202,16 @@ async function deleteMeal(id: number) {
                 </button>
                 <div class="flex items-center gap-0.5 flex-shrink-0">
                   <button
+                    @click.stop="toggleMove(meals.find(m => m.slot === slot)!.id)"
+                    :disabled="isMoving"
+                    class="w-8 h-8 rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
+                    :class="movingMealId === meals.find(m => m.slot === slot)!.id
+                      ? 'text-primary bg-primary/10'
+                      : 'text-text-muted hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-95'"
+                  >
+                    <i class="pi pi-arrows-v text-sm"></i>
+                  </button>
+                  <button
                     @click="deleteMeal(meals.find(m => m.slot === slot)!.id)"
                     :disabled="deletingId === meals.find(m => m.slot === slot)!.id"
                     class="w-8 h-8 rounded-xl flex items-center justify-center text-text-muted
@@ -171,6 +235,56 @@ async function deleteMeal(id: number) {
                       @saved="onSaved"
                       @cancel="closeForm"
                     />
+                  </div>
+                </div>
+              </Transition>
+
+              <!-- Picker de déplacement inline -->
+              <Transition name="expand">
+                <div v-if="movingMeal?.id === meals.find(m => m.slot === slot)?.id" class="overflow-hidden">
+                  <div class="min-h-0 mt-4 pt-4 border-t border-amber-100 dark:border-amber-900/30">
+                    <p class="text-[10px] font-sans font-semibold text-text-muted uppercase tracking-wider mb-2.5">Déplacer vers</p>
+                    <div class="space-y-1.5" :class="isMoving ? 'opacity-50 pointer-events-none' : ''">
+                      <!-- En-têtes des jours -->
+                      <div class="flex gap-1 pl-5">
+                        <div
+                          v-for="day in store.weekDays"
+                          :key="dateStr(day)"
+                          class="flex-1 text-center text-[10px] font-sans font-semibold uppercase leading-tight"
+                          :class="dateStr(day) === date ? 'text-primary' : 'text-text-muted'"
+                        >{{ DAYS_SHORT[day.getDay()] }}</div>
+                      </div>
+                      <!-- Ligne Midi -->
+                      <div class="flex items-center gap-1">
+                        <span class="w-5 text-[10px] font-sans font-semibold text-text-muted flex-shrink-0 text-right leading-none">M</span>
+                        <button
+                          v-for="day in store.weekDays"
+                          :key="dateStr(day) + '-0'"
+                          :disabled="isSourceSlot(dateStr(day), 0)"
+                          @click="onMoveClick(dateStr(day), 0)"
+                          class="flex-1 h-9 rounded-lg text-[10px] font-sans overflow-hidden transition-none"
+                          :class="slotClass(dateStr(day), 0)"
+                        >
+                          <span v-if="isSourceSlot(dateStr(day), 0)" class="text-primary">●</span>
+                          <span v-else-if="mealAtSlot(dateStr(day), 0)" class="block truncate px-0.5 leading-tight">{{ mealAtSlot(dateStr(day), 0)!.name.slice(0, 5) }}</span>
+                        </button>
+                      </div>
+                      <!-- Ligne Soir -->
+                      <div class="flex items-center gap-1">
+                        <span class="w-5 text-[10px] font-sans font-semibold text-text-muted flex-shrink-0 text-right leading-none">S</span>
+                        <button
+                          v-for="day in store.weekDays"
+                          :key="dateStr(day) + '-1'"
+                          :disabled="isSourceSlot(dateStr(day), 1)"
+                          @click="onMoveClick(dateStr(day), 1)"
+                          class="flex-1 h-9 rounded-lg text-[10px] font-sans overflow-hidden transition-none"
+                          :class="slotClass(dateStr(day), 1)"
+                        >
+                          <span v-if="isSourceSlot(dateStr(day), 1)" class="text-primary">●</span>
+                          <span v-else-if="mealAtSlot(dateStr(day), 1)" class="block truncate px-0.5 leading-tight">{{ mealAtSlot(dateStr(day), 1)!.name.slice(0, 5) }}</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Transition>

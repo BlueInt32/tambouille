@@ -17,3 +17,8 @@ export interface UpdateMealRequest {
   name: string
   persons: number
 }
+
+export interface MoveMealRequest {
+  date: string
+  slot: number
+}
