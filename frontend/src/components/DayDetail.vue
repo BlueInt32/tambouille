@@ -120,14 +120,21 @@ async function deleteMeal(id: number) {
       <!-- Carte Midi -->
       <div v-for="slot in [0, 1]" :key="slot">
         <div
-          class="rounded-2xl overflow-hidden"
-          :class="meals.find(m => m.slot === slot) ? 'bg-surface-card shadow-sm' : 'bg-amber-50/50 dark:bg-amber-900/10 border border-dashed border-amber-600 dark:border-amber-700'"
+          class="rounded-2xl overflow-hidden bg-surface-card
+                 border-t border-l border-b-4 border-r-4
+                 border-t-amber-200 dark:border-t-amber-700/40
+                 border-l-amber-200 dark:border-l-amber-700/40
+                 border-b-amber-300 dark:border-b-amber-700
+                 border-r-amber-300 dark:border-r-amber-700"
         >
           <!-- Slot avec repas -->
           <template v-if="meals.find(m => m.slot === slot) as Meal">
             <div class="p-4">
               <div class="flex items-start justify-between gap-2">
-                <div class="flex-1 min-w-0">
+                <button
+                  class="flex-1 min-w-0 text-left"
+                  @click="startEdit(meals.find(m => m.slot === slot)!)"
+                >
                   <span class="inline-block text-xs font-sans font-semibold text-primary uppercase tracking-wider mb-1">
                     {{ SLOT_LABELS[slot] }}
                   </span>
@@ -138,15 +145,8 @@ async function deleteMeal(id: number) {
                     <i class="pi pi-user text-sm"></i>
                     {{ meals.find(m => m.slot === slot)!.persons }} personne{{ meals.find(m => m.slot === slot)!.persons > 1 ? 's' : '' }}
                   </p>
-                </div>
+                </button>
                 <div class="flex items-center gap-0.5 flex-shrink-0">
-                  <button
-                    @click="startEdit(meals.find(m => m.slot === slot)!)"
-                    class="w-8 h-8 rounded-xl flex items-center justify-center text-text-muted
-                           hover:bg-amber-100 dark:hover:bg-amber-900/30 hover:text-primary active:scale-95 transition-all"
-                  >
-                    <i class="pi pi-pencil text-sm"></i>
-                  </button>
                   <button
                     @click="deleteMeal(meals.find(m => m.slot === slot)!.id)"
                     :disabled="deletingId === meals.find(m => m.slot === slot)!.id"
@@ -162,15 +162,17 @@ async function deleteMeal(id: number) {
 
               <!-- Formulaire d'édition inline -->
               <Transition name="expand">
-                <MealForm
-                  v-if="editingMeal?.id === meals.find(m => m.slot === slot)?.id"
-                  :date="date"
-                  :meal="editingMeal"
-                  :slot="slot"
-                  class="mt-4 pt-4 border-t border-amber-100 dark:border-amber-900/30"
-                  @saved="onSaved"
-                  @cancel="closeForm"
-                />
+                <div v-if="editingMeal?.id === meals.find(m => m.slot === slot)?.id" class="overflow-hidden">
+                  <div class="min-h-0 px-1 mt-4 pt-4 border-t border-amber-100 dark:border-amber-900/30">
+                    <MealForm
+                      :date="date"
+                      :meal="editingMeal"
+                      :slot="slot"
+                      @saved="onSaved"
+                      @cancel="closeForm"
+                    />
+                  </div>
+                </div>
               </Transition>
             </div>
           </template>
@@ -179,22 +181,23 @@ async function deleteMeal(id: number) {
           <template v-else>
             <button
               @click="addingSlot = addingSlot === slot ? null : slot"
-              class="w-full p-4 flex items-center gap-3 text-left"
-              :class="addingSlot === slot ? 'cursor-default' : 'hover:bg-amber-100/50 dark:hover:bg-amber-900/20 active:bg-amber-100 dark:active:bg-amber-900/30 transition-colors cursor-pointer'"
+              class="w-full p-4 flex items-center gap-3 text-left cursor-pointer"
             >
               <span class="text-xs font-sans font-semibold text-text-muted uppercase tracking-wider w-8">{{ SLOT_LABELS[slot] }}</span>
-              <span v-if="addingSlot !== slot" class="font-sans text-text-muted text-sm italic">Ajouter un repas…</span>
+              <span class="font-sans text-text-muted text-sm italic">Ajouter un repas…</span>
             </button>
 
             <Transition name="expand">
-              <div v-if="addingSlot === slot" class="px-4 pb-4">
-                <MealForm
-                  :date="date"
-                  :meal="null"
-                  :slot="slot"
-                  @saved="onSaved"
-                  @cancel="closeForm"
-                />
+              <div v-if="addingSlot === slot" class="overflow-hidden">
+                <div class="min-h-0 px-4 pb-4">
+                  <MealForm
+                    :date="date"
+                    :meal="null"
+                    :slot="slot"
+                    @saved="onSaved"
+                    @cancel="closeForm"
+                  />
+                </div>
               </div>
             </Transition>
           </template>
@@ -206,15 +209,21 @@ async function deleteMeal(id: number) {
 </template>
 
 <style scoped>
-.expand-enter-active,
+.expand-enter-active {
+  display: grid;
+  transition: grid-template-rows 0.15s ease-out, opacity 0.12s ease-out;
+}
 .expand-leave-active {
-  transition: max-height 0.25s ease, opacity 0.2s ease;
-  overflow: hidden;
-  max-height: 400px;
+  display: grid;
+  transition: grid-template-rows 0.12s ease-in, opacity 0.1s ease-in;
 }
 .expand-enter-from,
 .expand-leave-to {
-  max-height: 0;
+  grid-template-rows: 0fr;
   opacity: 0;
+}
+.expand-enter-to,
+.expand-leave-from {
+  grid-template-rows: 1fr;
 }
 </style>

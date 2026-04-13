@@ -20,7 +20,7 @@ const name = ref(props.meal?.name ?? '')
 const persons = ref(props.meal?.persons ?? 2)
 const nameInput = ref<HTMLInputElement | null>(null)
 
-onMounted(() => nameInput.value?.focus())
+onMounted(() => nameInput.value?.focus({ preventScroll: true }))
 const loading = ref(false)
 const error = ref('')
 
@@ -64,7 +64,7 @@ async function submit() {
         placeholder="Ex : Poulet rôti, Pâtes…"
         autocomplete="off"
         class="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-surface font-sans text-text text-sm
-               placeholder:text-text-muted/40 focus:outline-none focus:ring-2 focus:ring-primary
+               placeholder:text-text-muted/40 focus:outline focus:outline-2 focus:outline-primary focus:outline-offset-0
                focus:border-transparent transition-all"
         :class="{ 'border-red-300': error }"
       />

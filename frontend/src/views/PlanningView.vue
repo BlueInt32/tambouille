@@ -10,7 +10,6 @@ const router = useRouter()
 const store = usePlanningStore()
 const { isDark, toggle: toggleTheme } = useTheme()
 const selectedDate = ref<string | null>(null)
-const slideDirection = ref<'up' | 'down'>('up')
 const weekGridRef = ref<InstanceType<typeof WeekGrid> | null>(null)
 
 function getTodayMondayStr(): string {
@@ -71,12 +70,10 @@ watch(() => store.currentWeekMonday, () => {
 })
 
 function selectDay(date: string) {
-  slideDirection.value = 'up'
   selectedDate.value = date
 }
 
 function back() {
-  slideDirection.value = 'down'
   selectedDate.value = null
 }
 
@@ -134,17 +131,17 @@ function logout() {
 
     <!-- Contenu principal avec transition slide -->
     <div class="relative flex-1 min-h-0 overflow-hidden">
-      <Transition :name="slideDirection === 'up' ? 'slide-up' : 'slide-down'">
+      <WeekGrid
+        ref="weekGridRef"
+        @select-day="selectDay"
+      />
+      <Transition name="sheet">
         <DayDetail
           v-if="selectedDate"
           :key="selectedDate"
           :date="selectedDate"
           @back="back"
-        />
-        <WeekGrid
-          v-else
-          ref="weekGridRef"
-          @select-day="selectDay"
+          class="absolute inset-0 overflow-y-auto bg-surface"
         />
       </Transition>
     </div>
@@ -152,50 +149,13 @@ function logout() {
 </template>
 
 <style scoped>
-/* Ouverture : jour monte depuis le bas */
-.slide-up-enter-active,
-.slide-up-leave-active,
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
-  position: absolute;
-  width: 100%;
-  height: 100%;
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-.slide-up-enter-from {
+.sheet-enter-from,
+.sheet-leave-to {
   transform: translateY(100%);
-  opacity: 0;
-}
-.slide-up-enter-to {
-  transform: translateY(0);
-  opacity: 1;
-}
-.slide-up-leave-from {
-  transform: translateY(0);
-  opacity: 1;
-}
-.slide-up-leave-to {
-  transform: translateY(0);
-  opacity: 0;
-}
-
-/* Fermeture : jour redescend */
-.slide-down-enter-from {
-  transform: translateY(0);
-  opacity: 0;
-}
-.slide-down-enter-to {
-  transform: translateY(0);
-  opacity: 1;
-}
-.slide-down-leave-from {
-  transform: translateY(0);
-  opacity: 1;
-}
-.slide-down-leave-to {
-  transform: translateY(100%);
-  opacity: 0;
 }
 
 .fade-fast-enter-active,
