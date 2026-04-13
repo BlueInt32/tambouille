@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { usePlanningStore } from '@/stores/planning'
 import MealForm from '@/components/MealForm.vue'
 import type { Meal } from '@/types'
@@ -67,9 +67,24 @@ const dayLabel = computed(() => {
 
 const meals = computed(() => store.mealsForDay(props.date))
 
+// Refs des cards par slot
+const cardRefs = ref<(HTMLElement | null)[]>([null, null])
+
+async function scrollToCard(slot: number) {
+  await nextTick()
+  cardRefs.value[slot]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 // État du formulaire
 const editingMeal = ref<Meal | null>(null)
 const addingSlot = ref<number | null>(null)
+
+function toggleAddSlot(slot: number) {
+  addingSlot.value = addingSlot.value === slot ? null : slot
+  if (addingSlot.value === slot) {
+    scrollToCard(slot)
+  }
+}
 
 const deletingId = ref<number | null>(null)
 
@@ -128,6 +143,7 @@ function startEdit(meal: Meal) {
   addingSlot.value = null
   movingMealId.value = null
   editingMeal.value = meal
+  scrollToCard(meal.slot)
 }
 
 function closeForm() {
@@ -174,6 +190,7 @@ async function deleteMeal(id: number) {
       <!-- Carte Midi -->
       <div v-for="slot in [0, 1]" :key="slot">
         <div
+          :ref="(el) => { cardRefs[slot] = el as HTMLElement | null }"
           class="rounded-2xl overflow-hidden bg-surface-card
                  border-t border-l border-b-4 border-r-4
                  border-t-amber-200 dark:border-t-amber-700/40
@@ -294,7 +311,7 @@ async function deleteMeal(id: number) {
           <!-- Slot vide -->
           <template v-else>
             <button
-              @click="addingSlot = addingSlot === slot ? null : slot"
+              @click="toggleAddSlot(slot)"
               class="w-full p-4 flex items-center gap-3 text-left cursor-pointer"
             >
               <span class="text-xs font-sans font-semibold text-text-muted uppercase tracking-wider w-8">{{ SLOT_LABELS[slot] }}</span>
