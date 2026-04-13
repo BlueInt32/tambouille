@@ -5,6 +5,7 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
   --color-primary:       234 124 30;
   --color-primary-light: 245 168 78;
   --color-primary-dark:  196 94 10;
@@ -17,6 +18,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --color-surface:      28 18 8;
   --color-surface-card: 38 26 14;
   --color-text:         240 228 204;
