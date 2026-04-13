@@ -25,18 +25,22 @@ const isToday = (() => {
 
 <template>
   <div
-    class="bg-surface-card rounded-xl border-l-4 shadow-sm cursor-pointer
-           active:scale-[0.99] transition-all duration-150"
-    :class="isToday ? 'border-l-primary' : 'border-l-amber-200 dark:border-l-amber-800/50'"
+    class="bg-surface-card rounded-xl border-t border-l border-b-4 border-r-4
+           border-t-amber-200 dark:border-t-amber-700/40
+           border-l-amber-200 dark:border-l-amber-700/40
+           cursor-pointer active:scale-[0.99] transition-all duration-150"
+    :class="isToday
+      ? 'border-b-primary border-r-primary'
+      : 'border-b-amber-300 dark:border-b-amber-700 border-r-amber-300 dark:border-r-amber-700'"
   >
     <div class="flex items-center gap-2.5 px-3 py-2.5">
       <!-- Date -->
       <div
-        class="flex-shrink-0 w-10 h-10 rounded-xl flex flex-col items-center justify-center"
+        class="flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center gap-0.5"
         :class="isToday ? 'bg-primary text-white' : 'bg-amber-50 dark:bg-amber-900/20 text-text'"
       >
-        <span class="font-display font-bold text-base leading-none">{{ dayNum }}</span>
-        <span class="font-sans text-[10px] uppercase tracking-wide mt-0.5 opacity-70">{{ monthName }}</span>
+        <span class="font-display font-bold text-xl leading-none">{{ dayNum }}</span>
+        <span class="font-sans text-[11px] uppercase tracking-wide opacity-70">{{ monthName }}</span>
       </div>
 
       <!-- Contenu -->

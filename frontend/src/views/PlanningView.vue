@@ -58,7 +58,7 @@ function logout() {
 <template>
   <div class="h-dvh flex flex-col bg-surface font-sans overflow-hidden">
     <!-- Barre de titre -->
-    <header class="bg-surface-card border-b border-amber-100 dark:border-amber-900/30 px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+    <header class="bg-surface-card border-b border-amber-100 dark:border-amber-900/30 px-4 py-2 flex items-center justify-between sticky top-0 z-20 shadow-sm">
       <Transition name="fade-fast" mode="out-in">
         <button
           v-if="selectedDate"

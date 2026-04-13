@@ -161,7 +161,7 @@ onUnmounted(() => {
 
       <!-- Panneau gauche : semaine précédente -->
       <div class="w-screen shrink-0 px-4 flex flex-col h-full">
-        <div class="flex items-center justify-between py-3 shrink-0">
+        <div class="flex items-center justify-between py-2 shrink-0">
           <button @click="completeNav(-1)" :disabled="isAnimating"
             class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
             <i class="pi pi-chevron-left text-base"></i>
@@ -186,7 +186,7 @@ onUnmounted(() => {
 
       <!-- Panneau central : semaine courante -->
       <div class="w-screen shrink-0 px-4 flex flex-col h-full">
-        <div class="flex items-center justify-between py-3 shrink-0">
+        <div class="flex items-center justify-between py-2 shrink-0">
           <button @click="completeNav(-1)" :disabled="isAnimating"
             class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
             <i class="pi pi-chevron-left text-base"></i>
@@ -217,7 +217,7 @@ onUnmounted(() => {
 
       <!-- Panneau droit : semaine suivante -->
       <div class="w-screen shrink-0 px-4 flex flex-col h-full">
-        <div class="flex items-center justify-between py-3 shrink-0">
+        <div class="flex items-center justify-between py-2 shrink-0">
           <button @click="completeNav(-1)" :disabled="isAnimating"
             class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
             <i class="pi pi-chevron-left text-base"></i>
