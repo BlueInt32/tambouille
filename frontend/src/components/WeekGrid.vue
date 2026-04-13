@@ -10,6 +10,13 @@ const store = usePlanningStore()
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
                    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
 
+function isoWeek(monday: Date): number {
+  const d = new Date(monday)
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7)
+  const week1 = new Date(d.getFullYear(), 0, 4)
+  return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7)
+}
+
 function weekLabel(monday: Date): string {
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
   const first = days[0], last = days[6]
@@ -159,7 +166,7 @@ onUnmounted(() => {
             class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
             <i class="pi pi-chevron-left text-base"></i>
           </button>
-          <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel(leftMonday) }}</p>
+          <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel(leftMonday) }}<span class="font-sans font-normal text-text-muted text-sm"> - S{{ isoWeek(leftMonday) }}</span></p>
           <button @click="completeNav(1)" :disabled="isAnimating"
             class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
             <i class="pi pi-chevron-right text-base"></i>
@@ -185,7 +192,7 @@ onUnmounted(() => {
             <i class="pi pi-chevron-left text-base"></i>
           </button>
           <div class="text-center">
-            <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel(centerMonday) }}</p>
+            <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel(centerMonday) }}<span class="font-sans font-normal text-text-muted text-sm"> - S{{ isoWeek(centerMonday) }}</span></p>
             <p v-if="showLoading" class="text-text-muted text-xs mt-0.5 font-sans">Chargement…</p>
           </div>
           <button @click="completeNav(1)" :disabled="isAnimating"
@@ -215,7 +222,7 @@ onUnmounted(() => {
             class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
             <i class="pi pi-chevron-left text-base"></i>
           </button>
-          <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel(rightMonday) }}</p>
+          <p class="font-display text-text font-semibold text-base leading-tight">{{ weekLabel(rightMonday) }}<span class="font-sans font-normal text-text-muted text-sm"> - S{{ isoWeek(rightMonday) }}</span></p>
           <button @click="completeNav(1)" :disabled="isAnimating"
             class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors disabled:opacity-40">
             <i class="pi pi-chevron-right text-base"></i>

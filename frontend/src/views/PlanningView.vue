@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlanningStore } from '@/stores/planning'
 import { useTheme } from '@/composables/useTheme'
@@ -11,8 +11,34 @@ const store = usePlanningStore()
 const { isDark, toggle: toggleTheme } = useTheme()
 const selectedDate = ref<string | null>(null)
 
+function getISOWeek(date: Date): number {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7)
+  const week1 = new Date(d.getFullYear(), 0, 4)
+  return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7)
+}
+
+function setWeekTitle() {
+  document.title = `Tambouille - Semaine ${getISOWeek(store.currentWeekMonday)}`
+}
+
 onMounted(() => {
   store.fetchWeek()
+  setWeekTitle()
+})
+
+watch(selectedDate, (date) => {
+  if (date) {
+    const fullDate = new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+    document.title = `Tambouille - ${fullDate.charAt(0).toUpperCase() + fullDate.slice(1)}`
+  } else {
+    setWeekTitle()
+  }
+})
+
+watch(() => store.currentWeekMonday, () => {
+  if (!selectedDate.value) setWeekTitle()
 })
 
 function selectDay(date: string) {
