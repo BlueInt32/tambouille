@@ -2,13 +2,13 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlanningStore } from '@/stores/planning'
-import { useTheme } from '@/composables/useTheme'
+
 import WeekGrid from '@/components/WeekGrid.vue'
 import DayDetail from '@/components/DayDetail.vue'
 
 const router = useRouter()
 const store = usePlanningStore()
-const { isDark, toggle: toggleTheme } = useTheme()
+
 const selectedDate = ref<string | null>(null)
 const weekGridRef = ref<InstanceType<typeof WeekGrid> | null>(null)
 
@@ -112,13 +112,7 @@ function logout() {
             <i class="pi pi-calendar text-base"></i>
           </button>
         </Transition>
-        <button
-          @click="toggleTheme"
-          class="text-text-muted hover:text-text transition-colors p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
-          :title="isDark ? 'Mode clair' : 'Mode nuit'"
-        >
-          <i :class="isDark ? 'pi pi-sun' : 'pi pi-moon'" class="text-base"></i>
-        </button>
+
         <button
           @click="logout"
           class="text-text-muted hover:text-text transition-colors p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"

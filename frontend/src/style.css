@@ -17,14 +17,6 @@
   --color-text-muted:    138 106 74;
 }
 
-.dark {
-  color-scheme: dark;
-  --color-surface:      28 18 8;
-  --color-surface-card: 38 26 14;
-  --color-text:         240 228 204;
-  --color-text-muted:   160 120 80;
-}
-
 * {
   box-sizing: border-box;
 }
