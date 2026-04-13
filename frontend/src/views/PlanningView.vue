@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlanningStore } from '@/stores/planning'
 import { useTheme } from '@/composables/useTheme'
@@ -10,6 +10,35 @@ const router = useRouter()
 const store = usePlanningStore()
 const { isDark, toggle: toggleTheme } = useTheme()
 const selectedDate = ref<string | null>(null)
+const slideDirection = ref<'up' | 'down'>('up')
+const weekGridRef = ref<InstanceType<typeof WeekGrid> | null>(null)
+
+function getTodayMondayStr(): string {
+  const d = new Date()
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  d.setHours(0, 0, 0, 0)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${dd}`
+}
+
+function mondayStr(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const isOnTodayWeek = computed(() =>
+  mondayStr(store.currentWeekMonday) === getTodayMondayStr()
+)
+
+function goToToday() {
+  weekGridRef.value?.goToToday()
+}
 
 function getISOWeek(date: Date): number {
   const d = new Date(date)
@@ -42,10 +71,12 @@ watch(() => store.currentWeekMonday, () => {
 })
 
 function selectDay(date: string) {
+  slideDirection.value = 'up'
   selectedDate.value = date
 }
 
 function back() {
+  slideDirection.value = 'down'
   selectedDate.value = null
 }
 
@@ -64,8 +95,8 @@ function logout() {
           v-if="selectedDate"
           key="back"
           @click="back"
-          class="flex items-center gap-1.5 text-primary font-semibold text-sm py-1 px-2 -ml-2 rounded-lg
-                 hover:bg-primary/10 active:bg-primary/20 transition-colors"
+          class="flex items-center gap-1.5 text-text font-semibold text-sm py-1 px-2 -ml-2 rounded-lg
+                 hover:bg-amber-100 dark:hover:bg-amber-900/30 active:bg-amber-100/80 transition-colors"
         >
           <i class="pi pi-chevron-left text-sm"></i>
           Semaine
@@ -74,16 +105,26 @@ function logout() {
       </Transition>
 
       <div class="flex items-center gap-0.5">
+        <Transition name="fade-fast">
+          <button
+            v-if="!isOnTodayWeek && !selectedDate"
+            @click="goToToday"
+            class="text-text-muted hover:text-text transition-colors p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
+            title="Revenir à cette semaine"
+          >
+            <i class="pi pi-calendar text-base"></i>
+          </button>
+        </Transition>
         <button
           @click="toggleTheme"
-          class="text-text-muted/60 hover:text-text-muted transition-colors p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
+          class="text-text-muted hover:text-text transition-colors p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
           :title="isDark ? 'Mode clair' : 'Mode nuit'"
         >
           <i :class="isDark ? 'pi pi-sun' : 'pi pi-moon'" class="text-base"></i>
         </button>
         <button
           @click="logout"
-          class="text-text-muted/60 hover:text-text-muted transition-colors p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
+          class="text-text-muted hover:text-text transition-colors p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
           title="Déconnexion"
         >
           <i class="pi pi-sign-out text-base"></i>
@@ -93,7 +134,7 @@ function logout() {
 
     <!-- Contenu principal avec transition slide -->
     <div class="relative flex-1 min-h-0 overflow-hidden">
-      <Transition name="slide">
+      <Transition :name="slideDirection === 'up' ? 'slide-up' : 'slide-down'">
         <DayDetail
           v-if="selectedDate"
           :key="selectedDate"
@@ -102,6 +143,7 @@ function logout() {
         />
         <WeekGrid
           v-else
+          ref="weekGridRef"
           @select-day="selectDay"
         />
       </Transition>
@@ -110,24 +152,50 @@ function logout() {
 </template>
 
 <style scoped>
-.slide-enter-active,
-.slide-leave-active {
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+/* Ouverture : jour monte depuis le bas */
+.slide-up-enter-active,
+.slide-up-leave-active,
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
   position: absolute;
   width: 100%;
+  height: 100%;
 }
-.slide-enter-from {
-  transform: translateX(100%);
+
+.slide-up-enter-from {
+  transform: translateY(100%);
   opacity: 0;
 }
-.slide-leave-to {
-  transform: translateX(-30%);
-  opacity: 0;
-}
-.slide-leave-from,
-.slide-enter-to {
-  transform: translateX(0);
+.slide-up-enter-to {
+  transform: translateY(0);
   opacity: 1;
+}
+.slide-up-leave-from {
+  transform: translateY(0);
+  opacity: 1;
+}
+.slide-up-leave-to {
+  transform: translateY(0);
+  opacity: 0;
+}
+
+/* Fermeture : jour redescend */
+.slide-down-enter-from {
+  transform: translateY(0);
+  opacity: 0;
+}
+.slide-down-enter-to {
+  transform: translateY(0);
+  opacity: 1;
+}
+.slide-down-leave-from {
+  transform: translateY(0);
+  opacity: 1;
+}
+.slide-down-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
 }
 
 .fade-fast-enter-active,

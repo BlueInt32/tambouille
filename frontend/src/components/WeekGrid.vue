@@ -3,6 +3,15 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { usePlanningStore, addDays } from '@/stores/planning'
 import DayCard from '@/components/DayCard.vue'
 
+function getMondayOf(date: Date): Date {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
 const emit = defineEmits<{ 'select-day': [date: string] }>()
 const store = usePlanningStore()
 
@@ -133,6 +142,40 @@ async function onTouchEnd(e: TouchEvent) {
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms))
 }
+
+async function goToToday() {
+  if (isAnimating.value) return
+  const todayMonday = getMondayOf(new Date())
+  if (dateStr(todayMonday) === dateStr(centerMonday.value)) return
+
+  const direction: 1 | -1 = todayMonday > centerMonday.value ? 1 : -1
+
+  // Placer la semaine cible dans le panneau off-screen
+  if (direction === 1) {
+    rightMonday.value = todayMonday
+  } else {
+    leftMonday.value = todayMonday
+  }
+  await nextTick()
+
+  isAnimating.value = true
+  animated.value = true
+  dragDelta.value = direction === 1 ? -window.innerWidth : window.innerWidth
+
+  await sleep(180)
+
+  centerMonday.value = todayMonday
+  await nextTick()
+  animated.value = false
+  dragDelta.value = 0
+  leftMonday.value = addDays(todayMonday, -7)
+  rightMonday.value = addDays(todayMonday, 7)
+  store.goToWeek(todayMonday)
+
+  isAnimating.value = false
+}
+
+defineExpose({ goToToday })
 
 // --- Indicateur de chargement avec debounce ---
 const showLoading = ref(false)

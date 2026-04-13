@@ -25,14 +25,15 @@ const isToday = (() => {
 
 <template>
   <div
-    class="bg-surface-card rounded-xl border-t border-l border-b-4 border-r-4
+    class="group relative bg-surface-card rounded-xl border-t border-l border-b-4 border-r-4
            border-t-amber-200 dark:border-t-amber-700/40
            border-l-amber-200 dark:border-l-amber-700/40
-           cursor-pointer active:scale-[0.99] transition-all duration-150"
+           cursor-pointer touch-manipulation transition-none"
     :class="isToday
       ? 'border-b-primary border-r-primary'
       : 'border-b-amber-300 dark:border-b-amber-700 border-r-amber-300 dark:border-r-amber-700'"
   >
+    <div class="absolute inset-0 rounded-xl bg-amber-500/0 group-active:bg-amber-500/15 dark:group-active:bg-amber-400/10 pointer-events-none transition-none"></div>
     <div class="flex items-center gap-2.5 px-3 py-2.5">
       <!-- Date -->
       <div

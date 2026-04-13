@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePlanningStore } from '@/stores/planning'
 import MealForm from '@/components/MealForm.vue'
 import type { Meal } from '@/types'
@@ -8,9 +8,50 @@ const props = defineProps<{
   date: string
 }>()
 
-defineEmits<{ back: [] }>()
+const emit = defineEmits<{ back: [] }>()
 
 const store = usePlanningStore()
+
+// Swipe to close
+const rootEl = ref<HTMLElement | null>(null)
+const dragY = ref(0)
+const isDragging = ref(false)
+let startY = 0
+let startX = 0
+
+function onTouchStart(e: TouchEvent) {
+  startY = e.touches[0].clientY
+  startX = e.touches[0].clientX
+  isDragging.value = true
+  dragY.value = 0
+}
+
+function onTouchMove(e: TouchEvent) {
+  if (!isDragging.value) return
+  const dy = e.touches[0].clientY - startY
+  const dx = Math.abs(e.touches[0].clientX - startX)
+  if (dy > 0 && dx < 40) {
+    dragY.value = dy
+    e.preventDefault()
+  }
+}
+
+function onTouchEnd() {
+  isDragging.value = false
+  if (dragY.value > 90) {
+    emit('back')
+  } else {
+    dragY.value = 0
+  }
+}
+
+onMounted(() => {
+  rootEl.value?.addEventListener('touchmove', onTouchMove, { passive: false })
+})
+
+onUnmounted(() => {
+  rootEl.value?.removeEventListener('touchmove', onTouchMove)
+})
 
 const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
@@ -55,9 +96,20 @@ async function deleteMeal(id: number) {
 </script>
 
 <template>
-  <div class="pb-8">
+  <div
+    ref="rootEl"
+    class="pb-8"
+    :style="dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: 'none', opacity: String(Math.max(0.6, 1 - dragY / 300)) } : { transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease' }"
+    @touchstart="onTouchStart"
+    @touchend="onTouchEnd"
+  >
+    <!-- Drag handle -->
+    <div class="flex justify-center pt-3 pb-1">
+      <div class="w-10 h-1 rounded-full bg-text-muted/20"></div>
+    </div>
+
     <!-- En-tête du jour -->
-    <div class="px-4 py-5 border-b border-amber-100 dark:border-amber-900/30">
+    <div class="px-4 py-4 border-b border-amber-100 dark:border-amber-900/30">
       <h2 class="font-display text-text text-2xl font-bold capitalize">{{ dayLabel }}</h2>
       <p class="font-sans text-text-muted text-sm mt-0.5">
         {{ meals.length === 0 ? 'Aucun repas prévu' : `${meals.length} repas planifié${meals.length > 1 ? 's' : ''}` }}
@@ -69,7 +121,7 @@ async function deleteMeal(id: number) {
       <div v-for="slot in [0, 1]" :key="slot">
         <div
           class="rounded-2xl overflow-hidden"
-          :class="meals.find(m => m.slot === slot) ? 'bg-surface-card shadow-sm' : 'bg-amber-50/50 dark:bg-amber-900/10 border border-dashed border-amber-200 dark:border-amber-800/30'"
+          :class="meals.find(m => m.slot === slot) ? 'bg-surface-card shadow-sm' : 'bg-amber-50/50 dark:bg-amber-900/10 border border-dashed border-amber-600 dark:border-amber-700'"
         >
           <!-- Slot avec repas -->
           <template v-if="meals.find(m => m.slot === slot) as Meal">
@@ -131,7 +183,7 @@ async function deleteMeal(id: number) {
               :class="addingSlot === slot ? 'cursor-default' : 'hover:bg-amber-100/50 dark:hover:bg-amber-900/20 active:bg-amber-100 dark:active:bg-amber-900/30 transition-colors cursor-pointer'"
             >
               <span class="text-xs font-sans font-semibold text-text-muted uppercase tracking-wider w-8">{{ SLOT_LABELS[slot] }}</span>
-              <span v-if="addingSlot !== slot" class="font-sans text-text-muted/60 text-sm italic">Ajouter un repas…</span>
+              <span v-if="addingSlot !== slot" class="font-sans text-text-muted text-sm italic">Ajouter un repas…</span>
             </button>
 
             <Transition name="expand">
