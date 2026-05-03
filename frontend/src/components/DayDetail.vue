@@ -14,7 +14,6 @@ const emit = defineEmits<{ back: [] }>();
 
 const store = usePlanningStore();
 
-const rootEl = ref<HTMLElement | null>(null);
 
 const DAYS_FR = [
   "Dimanche",
@@ -160,7 +159,7 @@ async function deleteMeal(id: number) {
 </script>
 
 <template>
-  <div ref="rootEl" class="pb-8">
+  <div class="pb-8">
     <!-- En-tête du jour -->
     <div
       class="px-4 py-4 border-b border-amber-100 dark:border-amber-900/30 flex items-start justify-between"
