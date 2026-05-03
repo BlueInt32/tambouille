@@ -79,6 +79,7 @@ try
 
     app.MapAuthEndpoints();
     app.MapMealEndpoints();
+    app.MapKnownDishEndpoints();
 
     logger.Info(@" _____ _   __  __ ___  ___  _   _ ___ _    _    ___ ");
     logger.Info(@" |_   _/_\ |  \/  | _ )/ _ \| | | |_ _| |  | |  | __|");

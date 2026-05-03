@@ -53,6 +53,8 @@ public static class MealEndpoints
             db.Meals.Add(meal);
             await db.SaveChangesAsync();
 
+            await UpsertKnownDishAsync(db, meal.Name);
+
             return Results.Created($"/api/meals/{meal.Id}", new MealDto(meal.Id, meal.Date, meal.Slot, meal.Name, meal.Persons));
         });
 
@@ -69,6 +71,8 @@ public static class MealEndpoints
             meal.Name = request.Name;
             meal.Persons = request.Persons;
             await db.SaveChangesAsync();
+
+            await UpsertKnownDishAsync(db, meal.Name);
 
             return Results.Ok(new MealDto(meal.Id, meal.Date, meal.Slot, meal.Name, meal.Persons));
         });
@@ -126,5 +130,15 @@ public static class MealEndpoints
 
             return Results.NoContent();
         });
+    }
+
+    private static async Task UpsertKnownDishAsync(AppDbContext db, string name)
+    {
+        var normalized = name.Trim();
+        if (!await db.KnownDishes.AnyAsync(k => k.Name.ToLower() == normalized.ToLower()))
+        {
+            db.KnownDishes.Add(new KnownDish { Name = normalized });
+            await db.SaveChangesAsync();
+        }
     }
 }

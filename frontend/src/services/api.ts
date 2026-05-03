@@ -18,6 +18,10 @@ export const authApi = {
     api.post<{ token: string }>('/api/auth/login', { password }),
 }
 
+export const knownDishesApi = {
+  getAll: () => api.get<string[]>('/api/known-dishes'),
+}
+
 export const mealsApi = {
   getWeek: (weekStart: string) =>
     api.get<Meal[]>('/api/meals', { params: { weekStart } }),
